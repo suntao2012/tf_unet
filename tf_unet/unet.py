@@ -19,6 +19,7 @@ author: jakeret
 '''
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+import time
 import os
 import shutil
 import numpy as np
@@ -308,7 +309,7 @@ class Trainer(object):
 
     verification_batch_size = 4
 
-    def __init__(self, net, batch_size=1, norm_grads=False, optimizer="momentum", opt_kwargs={}):
+    def __init__(self, net, batch_size=32, norm_grads=False, optimizer="momentum", opt_kwargs={}):
         self.net = net
         self.batch_size = batch_size
         self.norm_grads = norm_grads
@@ -474,6 +475,9 @@ class Trainer(object):
 
     def output_minibatch_stats(self, sess, summary_writer, step, batch_x, batch_y):
         # Calculate batch loss and accuracy
+        start_t = time.time()
+        _ = sess.run(self.net.predicter, feed_dict={self.net.x: batch_x,self.net.y: batch_y,self.net.keep_prob: 1.})
+        duration = time.time() - start_t
         summary_str, loss, acc, predictions = sess.run([self.summary_op,
                                                         self.net.cost,
                                                         self.net.accuracy,
@@ -484,7 +488,7 @@ class Trainer(object):
         summary_writer.add_summary(summary_str, step)
         summary_writer.flush()
         logging.info(
-            "Iter {:}, Minibatch Loss= {:.4f}, Training Accuracy= {:.4f}, Minibatch error= {:.1f}%".format(step,
+            "Inference Time= {:.4f}, Iter {:}, Minibatch Loss= {:.4f}, Training Accuracy= {:.4f}, Minibatch error= {:.1f}%".format(duration, step,
                                                                                                            loss,
                                                                                                            acc,
                                                                                                            error_rate(
